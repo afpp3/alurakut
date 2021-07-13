@@ -1,27 +1,23 @@
 import Image from 'next/image';
-import { OrkutNostalgicIconSet } from '../../lib/AlurakutCommons';
+import { useState } from 'react';
+import {
+  AlurakutMenuProfileSidebar,
+  OrkutNostalgicIconSet,
+} from '../../lib/AlurakutCommons';
 import { ProfileRelationsBoxWrapper } from '../ProfileRelations';
 import { MainGrid, Box } from './styles';
 
-function ProfileSidebar() {
-  const gitHubUser = 'afpp3';
-
+function ProfileSidebar({ githubUser }) {
   return (
-    <Box>
-      <Image
-        src={`http://github.com/${gitHubUser}.png`}
-        alt="profile"
-        height={40}
-        width={40}
-        layout="responsive"
-        aria-label="Profile Picture"
-        className="profilePicture"
-      />
+    <Box as="aside">
+      <AlurakutMenuProfileSidebar githubUser={githubUser} />
     </Box>
   );
 }
 
-export const Main = () => {
+export const Main = ({ githubUser }) => {
+  const [communities, setCommunities] = useState([]);
+
   const pessoasFavoritas = [
     'juunegreiros',
     'omariosouto',
@@ -31,10 +27,23 @@ export const Main = () => {
     'felipefialho',
   ];
 
+  const handleCreateCommunity = (event) => {
+    event.preventDefault();
+    const dataForm = new FormData(event.target);
+
+    const community = {
+      id: new Date().toISOString(),
+      title: dataForm.get('title'),
+      image: dataForm.get('image'),
+    };
+
+    setCommunities([...communities, community]);
+  };
+
   return (
     <MainGrid>
       <div className="profileArea" style={{ gridArea: 'profileArea' }}>
-        <ProfileSidebar />
+        <ProfileSidebar githubUser={githubUser} />
       </div>
 
       <div className="welcomeArea" style={{ gridArea: 'welcomeArea' }}>
@@ -43,12 +52,53 @@ export const Main = () => {
 
           <OrkutNostalgicIconSet />
         </Box>
+
+        <Box>
+          <h2 className="subTitle">O que você deseja fazer?</h2>
+
+          <form onSubmit={handleCreateCommunity}>
+            <div>
+              <input
+                type="text"
+                placeholder="Qual vai ser o nome da sua comunidade?"
+                name="title"
+                aria-label="Qual vai ser o nome da sua comunidade?"
+              />
+            </div>
+
+            <div>
+              <input
+                type="text"
+                placeholder="Coloque uma URL para usarmos de capa"
+                name="image"
+                aria-label="Coloque uma URL para usarmos de capa"
+              />
+            </div>
+
+            <button>Criar comunidade</button>
+          </form>
+        </Box>
       </div>
 
       <div
         className="profileRelationsArea"
         style={{ gridArea: 'profileRelationsArea' }}
       >
+        <ProfileRelationsBoxWrapper>
+          <h2 className="smallTitle">Comunidades({communities.length})</h2>
+
+          <ul>
+            {communities.map((community) => (
+              <li key={community.id}>
+                <a href={`/community/${community.title}`} key={community.title}>
+                  <img src={community.image} />
+                  <span>{community.title}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </ProfileRelationsBoxWrapper>
+
         <ProfileRelationsBoxWrapper>
           <h2 className="smallTitle">
             Pessoas da Comunidade ({pessoasFavoritas.length})
@@ -65,7 +115,6 @@ export const Main = () => {
             ))}
           </ul>
         </ProfileRelationsBoxWrapper>
-        <Box>Comunidades</Box>
       </div>
     </MainGrid>
   );
