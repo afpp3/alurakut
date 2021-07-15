@@ -4,7 +4,7 @@ import {
   AlurakutMenuProfileSidebar,
   OrkutNostalgicIconSet,
 } from '../../lib/AlurakutCommons';
-import { ProfileRelationsBoxWrapper } from '../ProfileRelations';
+import { ProfileRelationsBoxWrapper } from '../ProfileRelations/styles';
 import { MainGrid, Box } from './styles';
 
 function ProfileSidebar({ githubUser }) {
@@ -15,29 +15,35 @@ function ProfileSidebar({ githubUser }) {
   );
 }
 
-export const Main = ({ githubUser }) => {
-  const [communities, setCommunities] = useState([]);
-
-  const pessoasFavoritas = [
-    'juunegreiros',
-    'omariosouto',
-    'peas',
-    'rafaballerini',
-    'marcobrunodev',
-    'felipefialho',
-  ];
+export const Main = ({
+  githubUser,
+  followers,
+  communities,
+  setCommunities,
+}) => {
+  // const [communities, setCommunities] = useState([]);
 
   const handleCreateCommunity = (event) => {
     event.preventDefault();
     const dataForm = new FormData(event.target);
 
     const community = {
-      id: new Date().toISOString(),
       title: dataForm.get('title'),
-      image: dataForm.get('image'),
+      imageUrl: dataForm.get('image'),
+      creatorSlug: githubUser,
     };
 
-    setCommunities([...communities, community]);
+    fetch('/api/communities', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(community),
+    }).then(async (res) => {
+      const data = await res.json();
+      const newCommunity = data.record;
+      setCommunities([...communities, newCommunity]);
+    });
   };
 
   return (
@@ -68,7 +74,7 @@ export const Main = ({ githubUser }) => {
 
             <div>
               <input
-                type="text"
+                type="url"
                 placeholder="Coloque uma URL para usarmos de capa"
                 name="image"
                 aria-label="Coloque uma URL para usarmos de capa"
@@ -91,7 +97,7 @@ export const Main = ({ githubUser }) => {
             {communities.map((community) => (
               <li key={community.id}>
                 <a href={`/community/${community.title}`} key={community.title}>
-                  <img src={community.image} />
+                  <img src={community.imageUrl} alt={community.title} />
                   <span>{community.title}</span>
                 </a>
               </li>
@@ -101,15 +107,18 @@ export const Main = ({ githubUser }) => {
 
         <ProfileRelationsBoxWrapper>
           <h2 className="smallTitle">
-            Pessoas da Comunidade ({pessoasFavoritas.length})
+            Pessoas da Comunidade ({followers.length})
           </h2>
 
           <ul>
-            {pessoasFavoritas.map((user) => (
-              <li key={user}>
-                <a href={`/users/${user}`} key={user}>
-                  <img src={`https://github.com/${user}.png`} />
-                  <span>{user}</span>
+            {followers.map((user) => (
+              <li key={user.id}>
+                <a href={`/users/${user}`}>
+                  <img
+                    src={`https://github.com/${user.login}.png`}
+                    alt={user}
+                  />
+                  <span>{user.login}</span>
                 </a>
               </li>
             ))}
