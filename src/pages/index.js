@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react';
+import nookies from 'nookies';
+import jwt from 'jsonwebtoken';
+
 import { Main } from '../components/MainGrid';
 import { AlurakutMenu } from '../lib/AlurakutCommons';
 
-export default function Home() {
-  const githubUser = 'afpp3';
+export default function Home({ githubUser }) {
+  // const githubUser = 'afpp3';
 
   const [followers, setFollowers] = useState([]);
   const [communities, setCommunities] = useState([]);
@@ -49,4 +52,35 @@ export default function Home() {
       />
     </>
   );
+}
+
+export async function getServerSideProps(context) {
+  const cookies = nookies.get(context);
+  const token = cookies.USER_TOKEN;
+
+  const { isAuthenticated } = await fetch(
+    'http://alurakut.vercel.app/api/auth',
+    {
+      headers: {
+        Authorization: token,
+      },
+    },
+  ).then((res) => res.json());
+
+  if (!isAuthenticated) {
+    return {
+      redirect: {
+        destination: '/login',
+        permanent: false,
+      },
+    };
+  }
+
+  const { githubUser } = jwt.decode(token);
+
+  return {
+    props: {
+      githubUser,
+    },
+  };
 }
